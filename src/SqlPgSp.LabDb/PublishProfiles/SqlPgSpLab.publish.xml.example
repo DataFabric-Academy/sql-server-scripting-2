@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ตัวอย่าง Publish Profile
+  คัดลอกเป็น SqlPgSpLab.publish.xml แล้วแก้ TargetConnectionString
+  สำคัญ: DropObjectsNotInSource=False เสมอเมื่อ publish ทับ DB ที่มี object อื่น
+-->
+<Project ToolsVersion="Current">
+  <PropertyGroup>
+    <TargetDatabaseName>SqlPgSpLab</TargetDatabaseName>
+    <TargetConnectionString>Data Source=.;Initial Catalog=SqlPgSpLab;Integrated Security=True;TrustServerCertificate=True</TargetConnectionString>
+    <CreateNewDatabase>True</CreateNewDatabase>
+    <DropObjectsNotInSource>False</DropObjectsNotInSource>
+    <BlockOnPossibleDataLoss>True</BlockOnPossibleDataLoss>
+    <IncludeCompositeObjects>True</IncludeCompositeObjects>
+  </PropertyGroup>
+</Project>

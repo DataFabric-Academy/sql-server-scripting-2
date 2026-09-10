@@ -1,0 +1,42 @@
+# Build outputs
+[Bb]in/
+[Oo]bj/
+*.dacpac
+*.bacpac
+*.dll
+*.pdb
+
+# SSMS / Visual Studio / VS Code local
+*.user
+*.suo
+*.rsuser
+.vs/
+.vscode/*
+!.vscode/extensions.json
+*.dbmdl
+*.jfm
+*.publish.xml.user
+
+# Publish / local secrets
+**/PublishProfiles/*.publish.xml
+!**/PublishProfiles/*.publish.xml.example
+*.publish.xml
+App.config
+ConnectionStrings.config
+
+# OS / editor
+Thumbs.db
+Desktop.ini
+.DS_Store
+*~
+*.swp
+*.tmp
+
+# Local SQL scratch (do not commit)
+_local/
+scratch/
+*.bak
+
+# Visual Studio migration / upgrade logs
+UpgradeLog*.htm
+UpgradeLog*.XML
