@@ -64,5 +64,21 @@ PRINT N'         (3) SNAPSHOT + ตรวจแถว version / retry เมื�
 PRINT N'         (4) single protected UPDATE … WHERE Quantity >= @Need แล้วตรวจ @@ROWCOUNT';
 GO
 
+/*------------------------------------------------------------------------------
+  TODO 5 — Lost update / Double read (สไลด์ 56)
+------------------------------------------------------------------------------*/
+PRINT N'5.1 Lost update: Session A อ่านค่า → Session B อ่าน+เขียน+commit → Session A เขียนทับด้วยค่าเก่า';
+PRINT N'    กันด้วย: rowversion/optimistic check, UPDLOCK ตอนอ่าน, หรือ UPDATE แบบมีเงื่อนไขใน statement เดียว';
+PRINT N'5.2 Double read: ระหว่าง index scan มีแถวที่ key เลื่อน ทำให้แถวเดิมถูกอ่านซ้ำ (ต่างจาก Phantom ที่เป็นแถวใหม่เข้าช่วง predicate)';
+GO
+
+/*------------------------------------------------------------------------------
+  TODO 6 — สไลด์ 59: session isolation vs table hint
+------------------------------------------------------------------------------*/
+PRINT N'A) SET TRANSACTION ISOLATION LEVEL SERIALIZABLE มีผลทั้ง session จนเปลี่ยนกลับ';
+PRINT N'B) WITH (SERIALIZABLE) มีผลเฉพาะ statement/ตารางที่ใส่ hint — เหมาะเมื่ออยากจำกัดขอบเขต';
+PRINT N'โครง: SET XACT_ABORT ON; BEGIN TRY BEGIN TRAN … Mini* DML … COMMIT; CATCH: IF XACT_STATE()=-1 ROLLBACK;';
+GO
+
 PRINT N'===== Lab 04 solution ครบ =====';
 GO

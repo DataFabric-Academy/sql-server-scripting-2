@@ -1,60 +1,56 @@
 # SQL Server Programming — Stored Procedure (SQL-PG-SP)
 
-หลักสูตร 2 วัน (12 ชม.) สำหรับพัฒนา Database Programming ด้วย T-SQL  
-อ้างอิงโครงหลักสูตร: [SQL Server Programming - Stored Procedure | 9Expert](https://www.9experttraining.com/sql-server-programming-stored-procedure-training-course)
+หลักสูตร 2 วัน (12 ชม.) ตามสไลด์ **9Expert Training-SQL-PG-SP Version 5** (อ.ภัคพงศ์)  
+เว็บอ้างอิง: [SQL Server Programming - Stored Procedure | 9Expert](https://www.9experttraining.com/sql-server-programming-stored-procedure-training-course)
 
-## วัตถุประสงค์
+แผนสไลด์ ↔ lab: [`slide-mapping.md`](slide-mapping.md)  
+บริบท SQL Server **2025**: [`sql-server-2025.md`](sql-server-2025.md)
 
-1. เข้าใจองค์ประกอบของ T-SQL Script (batch, scope, flow control, error handling)
-2. สร้าง Script และ Database Objects ได้เหมาะสม: Stored Procedure, Function, Trigger
-3. ประกาศ Transaction และเลือก Isolation Level ได้ถูกต้องตามสถานการณ์
+## วัตถุประสงค์ (ตามหลักสูตร)
 
-## ผู้เข้าอบรมที่เหมาะสม
+1. เข้าใจองค์ประกอบต่าง ๆ ในการสร้าง Script
+2. สร้าง Script และนำไปสร้าง Objects ชนิดต่าง ๆ ได้อย่างเหมาะสม
+3. ประกาศ Transaction และเลือกใช้ Isolation Level ได้อย่างเหมาะสม
 
-- มีพื้นฐาน Query ด้วย T-SQL และต้องการทำงานกับ Transaction / Concurrency
-- Developer ที่ต้องการยกระดับโค้ดฝั่งฐานข้อมูล
-- ผู้ที่สนใจ Script ที่เกี่ยวกับ Database Performance และ Security Context
+## โครงสร้างตาม TOC สไลด์ (หน้า 11 / 107)
 
-## พื้นฐานที่ควรมี
+| โมดูล PPT | สไลด์ | ใน repo |
+|----------:|------:|---------|
+| 1. สิ่งที่ควรทราบก่อนใช้งาน Microsoft SQL Server | 13–18 | [`module-01-sql-server-intro.md`](module-01-sql-server-intro.md) |
+| 2. องค์ประกอบต่าง ๆ ของภาษา T-SQL *(รวม Error Handling)* | 20–45 | `labs/01-language-elements` + `labs/02-error-handling` |
+| 3. การประกาศ Transaction | 47–52 | `labs/03-transactions` |
+| 4. การควบคุมภาวะใช้งานพร้อมกัน | 54–59 | `labs/04-concurrency` |
+| 5. ออกแบบและสร้าง Stored Procedures | 61–73 | `labs/05-stored-procedures` |
+| 6. ออกแบบและสร้าง Functions | 75–89 | `labs/06-functions` |
+| 7. ออกแบบและสร้าง Triggers | 91–105 | `labs/07-triggers` |
 
-1. ความเข้าใจ Relational Database และการออกแบบเบื้องต้น
-2. Query ข้อมูลด้วย T-SQL ได้ดี
-3. มีประสบการณ์ภาษาโปรแกรมใดภาษาหนึ่ง
+> **หมายเหตุ pedagogy:** PPT รวม Error Handling ในโมดูล 2 แต่ repo **แยก Lab 02** เพื่อจัดเวลาและ workshop — เนื้อหาเทียบสไลด์ 36–45
 
-## โครงสร้างเนื้อหา
+## แบบฝึกหัด vs สไลด์ Note
 
-| ลำดับ | หัวข้อ | Lab / Workshop |
-|------:|--------|----------------|
-| 0 | Setup สภาพแวดล้อม + Lab Objects | `setup/` |
-| 1 | องค์ประกอบภาษา T-SQL และ Scripting | `labs/01-language-elements` |
-| 2 | Error Handling | `labs/02-error-handling` |
-| 3 | Transaction | `labs/03-transactions` |
-| 4 | Concurrency & Isolation Levels | `labs/04-concurrency` |
-| — | Workshop Day 1: Order Processing | `workshops/day1-order-processing` |
-| 5 | Stored Procedures | `labs/05-stored-procedures` |
-| 6 | Functions | `labs/06-functions` |
-| 7 | DML Triggers | `labs/07-triggers` |
-| — | Workshop Day 2: API Layer | `workshops/day2-api-layer` |
+| ของใน PPT | ความหมาย | ของใน repo |
+|-----------|----------|------------|
+| สไลด์ **Note** (19, 46, 53, …) | หน้าจดว่าง | ไม่ใช่โจทย์ |
+| ตัวอย่างโค้ดบนสไลด์เนื้อหา | Instructor demo | `labs/*/demo.sql` |
+| — | แบบฝึกผู้เรียน | `labs/*/exercise.sql` + `solution.sql` |
+| — | Capstone / Pattern | `workshops/integrated-staging-transaction`, `day1-order-processing`, `day2-api-layer` |
+
+## ผู้เข้าอบรม / พื้นฐาน
+
+- มีพื้นฐาน Query ด้วย T-SQL และต้องการทำงานกับ Transaction / Concurrency  
+- Developer ที่ต้องการยกระดับโค้ดฝั่งฐานข้อมูล  
+- เข้าใจ Relational Database เบื้องต้น และ Query ได้ดี
 
 ## รูปแบบไฟล์ในแต่ละ Lab
 
 | ไฟล์ | ใช้โดย |
 |------|--------|
-| `README.md` | วัตถุประสงค์ ลำดับการสอน จุดสังเกต |
-| `demo.sql` | Instructor demo |
-| `exercise.sql` | แบบฝึกหัดผู้เรียน (มี TODO) |
+| `README.md` | วัตถุประสงค์, **เลขสไลด์**, จุดสังเกต |
+| `demo.sql` | Instructor — สอดคล้องตัวอย่างบนสไลด์ |
+| `exercise.sql` | ผู้เรียน (TODO) |
 | `solution.sql` | เฉลย |
 
-## ฐานข้อมูลที่ใช้
+## ฐานข้อมูล
 
-- **AdventureWorks** (หรือ AdventureWorks2022) เป็นหลักสำหรับ labs
-- Lab objects เสริมบน AdventureWorks: `Production.MiniProducts`, `Sales.Mini*`, `dbo.ErrorLog` (จาก `setup/01-create-lab-objects.sql`)
-- **SqlPgSpLab** (ทางเลือก): publish จาก `src/SqlPgSp.LabDb` — ดู [`ssms-git-and-sql-project.md`](ssms-git-and-sql-project.md)
-
-## Source Control & Project
-
-| ไฟล์ | บทบาท |
-|------|--------|
-| `SqlPgSp.sln` | เปิดใน SSMS 22 / Visual Studio |
-| `src/SqlPgSp.LabDb/*.sqlproj` | Schema-as-code ของ Lab DB (Build → dacpac → Publish) |
-| `labs/`, `workshops/` | สคริปต์ pedagogy — **ไม่อยู่ใน sqlproj** |
+- **AdventureWorks** (+ objects จาก `setup/01-create-lab-objects.sql`: Mini*, ErrorLog)
+- ทางเลือก: publish `src/SqlPgSp.LabDb` → `SqlPgSpLab` — [`ssms-git-and-sql-project.md`](ssms-git-and-sql-project.md)

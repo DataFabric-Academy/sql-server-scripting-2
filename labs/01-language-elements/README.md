@@ -1,45 +1,40 @@
 # Lab 01 — Language Elements & Scripting
 
-## วัตถุประสงค์
+**PPT:** โมดูล 2 (ส่วนต้น) · สไลด์ **20–35** · [`slide-mapping.md`](../../docs/slide-mapping.md)
 
-เข้าใจองค์ประกอบพื้นฐานของ T-SQL Script ที่จำเป็นก่อนเขียน Stored Procedure:
+## Scenario
 
-- Operators / Variables / Expressions
-- Batch vs `GO` และขอบเขตตัวแปร (scope)
-- Flow control: `IF/ELSE`, `WHILE` (`BREAK` / `CONTINUE`)
-- Table variable vs Temporary table
-- Predicate pitfalls (`= NULL`)
-- Comments และการจัดโครงสร้างสคริปต์
+ทีมเริ่มเขียนสคริปต์สั่งซื้อบน Mini* แต่โค้ดกระจัดกระจาย: ตัวแปรหายหลัง `GO`, เงื่อนไข `NULL` ผิด, loop ตัดสต็อกไม่ครบ  
+ก่อนสร้าง Stored Procedure ต้องทำให้ **batch / flow / temp storage** ทำงานตามที่ตั้งใจ
 
-## ระยะเวลาประมาณ
+## Skill Progression
 
-**45–60 นาที** (demo ~25 นาที + exercise ~20–30 นาที)
+| ระดับ | ทักษะที่ควรได้ |
+|------:|----------------|
+| 1 | อธิบาย Batch/`GO`, scope ของตัวแปร, comment, expression ได้ |
+| 2 | ใช้ `IF` / `WHILE` (+ `BREAK`/`CONTINUE`) และ predicate `IS NULL` ได้ถูกต้อง |
+| 3 | เลือก table variable vs `#temp` ตามงาน (สไลด์ 25–27) |
 
-## Prerequisites
+## เวลา / Prerequisites
 
-- รัน `setup/01-create-lab-objects.sql` แล้ว
-- เชื่อมต่อ AdventureWorks (หรือ AdventureWorks2022) ใน SSMS
-- พื้นฐาน `SELECT` / `JOIN` / `WHERE`
+**45–60 นาที** · รัน `setup/` แล้ว · พื้นฐาน `SELECT`/`JOIN`
 
-## ลำดับการรันไฟล์
+## Steps
 
-| ลำดับ | ไฟล์ | ผู้ใช้ |
+| ลำดับ | ไฟล์ | ทำอะไร |
 |------:|------|--------|
-| 1 | `demo.sql` | Instructor — อธิบายทีละส่วน ตาม section header |
-| 2 | `exercise.sql` | ผู้เรียน — ทำ TODO ทั้ง 4 ข้อ |
-| 3 | `solution.sql` | เฉลยหลังทำเสร็จ / ทบทวน |
+| 1 | `demo.sql` | Instructor รันทีละ section (รวม optional `REGEXP_*` บน compat 170) |
+| 2 | `exercise.sql` | ผู้เรียนทำ TODO 1–4 |
+| 3 | `solution.sql` | เฉลย |
 
 ## จุดที่ต้องสังเกต
 
-1. **`GO` ไม่ใช่ T-SQL** — เป็น client batch separator ของ SSMS; ตัวแปร `DECLARE` ไม่ข้าม batch
-2. **`WHERE col = NULL` ได้ 0 แถวเสมอ** — ต้องใช้ `IS NULL` / `IS NOT NULL`
-3. **Table variable** — cardinality estimate มักต่ำ (ประมาณ 1 แถวในแผนเก่า); ไม่มีสถิติแบบ temp table
-4. **Temp table (`#`)** — อยู่ได้ข้าม batch ใน session เดียวกัน; มีสถิติ และรองรับ index ได้ยืดหยุ่นกว่า
-5. **`BREAK` vs `CONTINUE`** — ออกจาก loop ทั้งก้อน vs ข้ามไปรอบถัดไป
+1. `GO` ไม่ใช่ T-SQL — ตัวแปรไม่ข้าม batch  
+2. `WHERE col = NULL` ได้ 0 แถวเสมอ → ใช้ `IS NULL`  
+3. Table variable ประมาณ cardinality ต่ำ; `#temp` มี statistics / ใช้ข้าม batch ได้  
+4. บนสไลด์ตัวอย่างใช้ `Sales.SalesOrderHeader` — lab ใช้ทั้ง AdventureWorks และ Mini*
 
-## Key Takeaways
+## Takeaways
 
-- แยก batch ด้วย `GO` เมื่อต้องสร้าง object หรือรีเซ็ต scope
-- เลือก table variable เมื่อชุดข้อมูลเล็ก/สั้นอายุ; ใช้ temp table เมื่อต้องการสถิติ / index / ใช้ข้าม batch
-- Predicate กับ `NULL` ต้องระวังเสมอใน production code
-- Flow control ใน T-SQL เหมาะกับ orchestration เบา ๆ — logic ซับซ้อนควรอยู่ใน procedure พร้อม error handling (lab ถัดไป)
+- Flow control ใน T-SQL เหมาะกับ orchestration เบา ๆ — logic ธุรกิจจริงไป Lab 02–05  
+- SQL Server 2025: มี `REGEXP_*` เป็น system function ใหม่ (compat 170)

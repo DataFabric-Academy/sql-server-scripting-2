@@ -1,18 +1,15 @@
 /*
 ==============================================================================
- Workshop Day 1 — Order Processing | STARTER (incomplete)
- Database: AdventureWorks / AdventureWorks2022
- Prerequisite: setup/01-create-lab-objects.sql
-
- Goal: Implement Sales.usp_PlaceOrder as an atomic place-order API.
+ Workshop Day 1 — Order Processing | STARTER
+ Goal:
+   1) Sales.usp_PlaceOrder (บรรทัดเดียว) — ใช้ OUTPUT INSERTED จับ OrderID
+   2) (ขยาย) Sales.OrderLineType + Sales.usp_PlaceOrderLines (TVP หลายบรรทัด)
+ แล้วรัน acceptance-tests.sql
 ==============================================================================
 */
 USE AdventureWorks;
 GO
 
-/* --------------------------------------------------------------------------
-   Helper: usp_LogError (สร้างถ้ายังไม่มี)
-   -------------------------------------------------------------------------- */
 CREATE OR ALTER PROCEDURE dbo.usp_LogError
 AS
 BEGIN
@@ -32,7 +29,9 @@ END;
 GO
 
 /* --------------------------------------------------------------------------
-   TODO: Implement Sales.usp_PlaceOrder
+   TODO A: usp_PlaceOrder (single line)
+   - ใช้ DECLARE @NewOrders TABLE ...; INSERT ... OUTPUT inserted.OrderID INTO @NewOrders
+   - ห้ามพึ่ง SCOPE_IDENTITY() เป็นคำตอบหลัก (ใช้ OUTPUT)
    -------------------------------------------------------------------------- */
 CREATE OR ALTER PROCEDURE Sales.usp_PlaceOrder
     @CustID    int,
@@ -43,87 +42,54 @@ CREATE OR ALTER PROCEDURE Sales.usp_PlaceOrder
 AS
 BEGIN
     SET NOCOUNT ON;
-    -- TODO: SET XACT_ABORT ...
+    -- TODO: SET XACT_ABORT ON;
+    SET @OrderID = NULL;
 
     BEGIN TRY
-        -- TODO: validate @Quantity > 0
-        -- TODO: validate customer exists + IsActive = 1  (THROW 51001)
-        -- TODO: BEGIN TRAN
-        -- TODO: check stock (THROW 51002 if insufficient)
-        -- TODO: INSERT MiniOrders
-        -- TODO: capture @OrderID
-        -- TODO: INSERT MiniOrderDetails
-        -- TODO: UPDATE MiniProducts SET Quantity -= @Quantity
-        -- TODO: COMMIT TRAN
-
-        RAISERROR(N'usp_PlaceOrder is not implemented yet.', 16, 1);
+        -- TODO: validate + BEGIN TRAN + stock check
+        -- TODO: INSERT MiniOrders WITH OUTPUT INSERTED into table var → @OrderID
+        -- TODO: INSERT detail + UPDATE stock + COMMIT
+        THROW 59999, N'TODO: implement usp_PlaceOrder', 1;
     END TRY
     BEGIN CATCH
-        -- TODO: rollback if needed
-        -- TODO: EXEC dbo.usp_LogError;
-        -- TODO: THROW;
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        EXEC dbo.usp_LogError;
         THROW;
     END CATCH
 END;
 GO
 
 /* --------------------------------------------------------------------------
-   Test harness — รันหลัง implement
+   TODO B (ขยาย): TVP + usp_PlaceOrderLines
    -------------------------------------------------------------------------- */
-DECLARE @newOrderId int;
-
--- Expect success
-BEGIN TRY
-    EXEC Sales.usp_PlaceOrder
-        @CustID = 1,
-        @ProductID = 854,
-        @Quantity = 2,
-        @UnitPrice = 100.00,
-        @OrderID = @newOrderId OUTPUT;
-
-    SELECT @newOrderId AS NewOrderId, N'SUCCESS' AS Result;
-END TRY
-BEGIN CATCH
-    SELECT ERROR_NUMBER() AS ErrNo, ERROR_MESSAGE() AS ErrMsg, N'FAILED' AS Result;
-END CATCH;
+/*
+IF OBJECT_ID(N'Sales.usp_PlaceOrderLines', N'P') IS NOT NULL DROP PROCEDURE Sales.usp_PlaceOrderLines;
+IF TYPE_ID(N'Sales.OrderLineType') IS NOT NULL DROP TYPE Sales.OrderLineType;
 GO
-
--- Expect failure: bad customer
-DECLARE @newOrderId int;
-BEGIN TRY
-    EXEC Sales.usp_PlaceOrder
-        @CustID = -1,
-        @ProductID = 854,
-        @Quantity = 1,
-        @UnitPrice = 10.00,
-        @OrderID = @newOrderId OUTPUT;
-END TRY
-BEGIN CATCH
-    SELECT ERROR_NUMBER() AS ErrNo, ERROR_MESSAGE() AS ErrMsg;
-END CATCH;
-GO
-
--- Expect failure: excessive qty (should not leave orphan order)
-DECLARE @newOrderId int;
-DECLARE @qtyBefore int =
+CREATE TYPE Sales.OrderLineType AS TABLE
 (
-    SELECT Quantity FROM Production.MiniProducts WHERE ProductID = 860
+    ProductID int NOT NULL,
+    Quantity  smallint NOT NULL,
+    UnitPrice money NOT NULL,
+    Discount  numeric(4,3) NOT NULL DEFAULT (0)
 );
+GO
+CREATE OR ALTER PROCEDURE Sales.usp_PlaceOrderLines
+    @CustID int,
+    @Lines Sales.OrderLineType READONLY,
+    @PurchaseOrderNumber varchar(25) = NULL,
+    @Freight money = 0,
+    @OrderID int OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+    -- TODO: validate lines + customer + stock for all products
+    -- TODO: INSERT order OUTPUT INSERTED; INSERT details FROM @Lines; UPDATE stock aggregated
+    THROW 59999, N'TODO: implement usp_PlaceOrderLines', 1;
+END;
+GO
+*/
 
-BEGIN TRY
-    EXEC Sales.usp_PlaceOrder
-        @CustID = 1,
-        @ProductID = 860,
-        @Quantity = 9999,
-        @UnitPrice = 10.00,
-        @OrderID = @newOrderId OUTPUT;
-END TRY
-BEGIN CATCH
-    SELECT ERROR_NUMBER() AS ErrNo, ERROR_MESSAGE() AS ErrMsg;
-END CATCH;
-
-SELECT
-    @qtyBefore AS QtyBefore,
-    (SELECT Quantity FROM Production.MiniProducts WHERE ProductID = 860) AS QtyAfter,
-    (SELECT COUNT(*) FROM dbo.ErrorLog) AS ErrorLogRows;
+PRINT N'Implement TODOs แล้วรัน acceptance-tests.sql';
 GO

@@ -1,48 +1,47 @@
 # Lab 05 — Stored Procedures
 
-## วัตถุประสงค์
+**PPT:** โมดูล 5 · สไลด์ **61–73** · Sniffing 71 · EXECUTE AS 72 · ENCRYPTION 73
 
-1. อธิบายประโยชน์ของ Stored Procedure เทียบกับ ad-hoc SQL ได้
-2. สร้าง Procedure พร้อม Input / OUTPUT / RETURN และเรียกใช้ถูกต้อง
-3. จัดการ Error ใน Procedure ด้วย TRY/CATCH + `usp_LogError` → `dbo.ErrorLog`
-4. ใช้ recommendation ที่สำคัญ: `SET NOCOUNT ON`, หลีกเลี่ยง `SELECT *`, `WITH ENCRYPTION`, `EXECUTE AS`
-5. อธิบาย Parameter Sniffing และ mitigation patterns ได้
-6. เรียก Nested Procedure และรู้จัก TVP แบบสั้น ๆ
+## Scenario
 
-## ระยะเวลาประมาณ
+แอปส่ง SQL ยาวหลายรอบต่อหนึ่งออเดอร์ — ยากต่อการควบคุมสิทธิ์และแผนการรัน  
+ทีมต้องการให้แอปเรียกแค่ชื่อ เช่น `Sales.usp_PlaceOrder` พร้อม parameter, error log และแนวทางลดปัญหา plan ผิดชุด (Parameter Sniffing)
 
-**90–100 นาที** (Demo ~45 นาที + Exercise ~40 นาที + Review ~10 นาที)
+## Skill Progression
 
-## Prerequisites
+| ระดับ | ทักษะที่ควรได้ |
+|------:|----------------|
+| 1 | อธิบายประโยชน์ SP และคำสั่งที่ใส่ใน SP ไม่ได้ (สไลด์ 64) |
+| 2 | สร้าง SP ด้วย INPUT / OUTPUT / RETURN + `SET NOCOUNT ON` + ErrorLog |
+| 3 | เลือก mitigation sniffing (`OPTIMIZE FOR` / local var / `RECOMPILE`) และอธิบาย PSP/OPPO บน SQL Server 2025 |
 
-- รัน `setup/01-create-lab-objects.sql` แล้ว
-- เข้าใจ TRY/CATCH และ Transaction จาก Day 1
-- Database: `AdventureWorks` หรือ `AdventureWorks2022`
+> Plan cache / sniffing เชิงลึก → [PT Module 08 Plan Caching](https://github.com/DataFabric-Academy/sql-server-performance-tuning/tree/main/Module_08_Plan_Caching)
 
-## ลำดับการรันไฟล์
+## เวลา / Prerequisites
 
-1. Instructor: `demo.sql` (ทีละ section ตามหัวข้อ)
-2. ผู้เรียน: `exercise.sql`
-3. ตรวจคำตอบ: `solution.sql`
+**90–100 นาที** · Day 1 เสร็จ (โดยเฉพาะ Lab 02–03) · Mini* + ErrorLog
+
+## Steps
+
+| ลำดับ | ไฟล์ | ทำอะไร |
+|------:|------|--------|
+| 1 | `demo.sql` | Benefits → Params → Security → Sniffing → Nested → (2025 note) |
+| 2 | `exercise.sql` | ผู้เรียน |
+| 3 | `solution.sql` | เฉลย |
 
 ## จุดที่ต้องสังเกต
 
 | หัวข้อ | จุดสังเกต |
 |--------|-----------|
-| Benefits | Encapsulation, security (GRANT EXECUTE), plan reuse, network round-trips |
-| Parameters | INPUT ปกติ / `OUTPUT` ต้องส่งตัวแปรกลับ / `RETURN` เป็น int status เท่านั้น |
-| Error handling | เรียก `usp_LogError` ใน CATCH ก่อน THROW — ดูแถวใน `dbo.ErrorLog` |
-| SET NOCOUNT ON | ลด DONE_IN_PROC messages ที่ทำให้ client บางตัวสับสน |
-| ENCRYPTION | `sp_helptext` / definition ใน catalog ดูไม่ได้ — ใช้เพื่อปกป้อง IP ไม่ใช่ security ที่แข็งแรง |
-| EXECUTE AS | เปลี่ยน security context ของ caller ภายใน procedure |
-| Parameter Sniffing | Plan ที่ compile ด้วย parameter แรกอาจไม่เหมาะกับค่าถัดไป |
-| Nested procs | `@@NESTLEVEL` สูงสุด 32 |
-| TVP | ส่งชุดข้อมูลเข้า procedure ได้โดยไม่ต้อง string-split |
+| Naming | ห้ามขึ้นต้น `sp_` · ใช้ two-part name |
+| OUTPUT vs RETURN | OUTPUT ส่งค่าธุรกิจ; RETURN = int status |
+| ENCRYPTION | ปกป้อง definition ไม่ใช่ security แข็งแรง |
+| EXECUTE AS | เปลี่ยน security context ภายใน proc |
+| 2025 / compat 170 | PSP สำหรับ DML + OPPO ช่วย sniffing ฝั่ง engine — mitigation แบบ manual ยังสำคัญ |
 
-## Key Takeaways
+รายละเอียด: [`sql-server-2025.md`](../../docs/sql-server-2025.md)
 
-- Procedure คือ API layer ของฐานข้อมูล — ออกแบบ parameter และ error contract ให้ชัด
-- ใช้ OUTPUT สำหรับค่าผลลัพธ์, RETURN สำหรับ status code
-- Parameter Sniffing ไม่ใช่ bug แต่เป็นพฤติกรรมของ plan cache — เลือก mitigation ตาม workload
-- `WITH ENCRYPTION` ไม่แทนที่สิทธิ์และการควบคุมการเข้าถึง
-- Nested procedure ช่วยแยกความรับผิดชอบ แต่ต้องออกแบบ error propagation ให้ดี
+## Takeaways
+
+- SP คือหน่วย API ของฐานข้อมูล — หนึ่งงานต่อหนึ่ง procedure  
+- ความปลอดภัยที่ดีเริ่มจาก `GRANT EXECUTE` ไม่เปิดตารางตรง ๆ

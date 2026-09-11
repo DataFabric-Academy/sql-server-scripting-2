@@ -1,44 +1,43 @@
 # Lab 06 — Functions (Scalar / TVF)
 
-## วัตถุประสงค์
+**PPT:** โมดูล 6 · สไลด์ **75–89** · Deterministic 80 · Perf/IQP 84–86 · เทียบ SP 89
 
-1. แยกแยะ Scalar UDF, Inline TVF และ Multi-statement TVF ได้
-2. เลือกชนิด Function ให้เหมาะกับงาน และอธิบายผลกระทบด้าน performance
-3. เปรียบเทียบ Scalar / mTVF กับทางเลือก (Inline TVF, JOIN, APPLY, computed column)
-4. เข้าใจข้อจำกัดด้าน side-effect และ security context ของ Function โดยสังเขป
+## Scenario
 
-## ระยะเวลาประมาณ
+รายงานต้องการ “ยอดสรุปต่อลูกค้า” และ “ถัง Freight” ใน `SELECT`  
+มีคนเสนอ Scalar UDF ทุกคอลัมน์ — รายงานช้าลงชัด  
+ให้เลือกชนิด Function ให้ถูก และรู้ว่าเมื่อไรควรเป็น Inline TVF หรือย้ายไป Stored Procedure
 
-**70–80 นาที**
+## Skill Progression
 
-## Prerequisites
+| ระดับ | ทักษะที่ควรได้ |
+|------:|----------------|
+| 1 | แยก Scalar / Inline TVF / Multi-statement TVF + ข้อจำกัด (ห้าม side-effect DML, ไม่มี TRY/CATCH ใน function) |
+| 2 | สร้าง Scalar และ Inline TVF ใช้งานจริงบน Mini* ได้ |
+| 3 | อธิบาย Deterministic, ผลกระทบ perf, Scalar UDF Inlining (compat ≥ 150) และเลือกทางเลือกแทน scalar ใน SELECT |
 
-- Lab 05 เสร็จแล้ว (รู้ CREATE MODULE / parameters)
-- `setup/01-create-lab-objects.sql` รันแล้ว
-- Database: `AdventureWorks` หรือ `AdventureWorks2022`
+> Execution plan / IQP เชิงลึก → [PT Module 07 Query Execution](https://github.com/DataFabric-Academy/sql-server-performance-tuning/tree/main/Module_07_Query_Execution)
 
-## ลำดับการรันไฟล์
+## เวลา / Prerequisites
 
-1. `demo.sql` — เทียบ Scalar vs Inline TVF vs mTVF + STATISTICS TIME/IO
-2. `exercise.sql`
-3. `solution.sql`
+**70–80 นาที** · Lab 05
 
-## เมื่อไหร่ใช้ชนิดไหน
+## Steps
 
-| ชนิด | ใช้เมื่อ | ข้อควรระวัง |
-|------|----------|-------------|
-| **Scalar UDF** | คำนวณค่าเดียวต่อแถว / ค่าคงที่ logic เล็ก ๆ | ก่อน SQL Server 2019 มักเรียกแบบ row-by-row; แม้มี inlining ก็ยังต้องระวัง |
-| **Inline TVF** | คืนผลเป็นชุดแถว และต้องการให้ optimizer **expand** เข้า query | **แนะนำเป็นค่าเริ่มต้น** สำหรับ table-valued API |
-| **Multi-statement TVF** | ต้องใช้หลายขั้นตอน / ตัวแปร / logic ที่เขียนเป็น single RETURN query ไม่ได้ | Table variable ภายใน → สถิติไม่ดี, มักช้ากว่า inline |
+| ลำดับ | ไฟล์ | ทำอะไร |
+|------:|------|--------|
+| 1 | `demo.sql` | เทียบชนิด + STATISTICS + ตรวจ `is_inlineable` |
+| 2 | `exercise.sql` | รวมข้อ Deterministic (สไลด์ 80) |
+| 3 | `solution.sql` | เฉลย |
 
 ## จุดที่ต้องสังเกต
 
-- เปิด `SET STATISTICS TIME ON` / `IO ON` หรือดู Estimated Plan: Inline TVF มักถูก embed; mTVF เป็น Table Valued Function operator แยก
-- Function **ห้าม** เปลี่ยนข้อมูลถาวร (no INSERT/UPDATE/DELETE ตารางจริง) — ไม่ใช่ที่สำหรับ business write API
-- Security: ownership chaining คล้าย procedure; `EXECUTE AS` ใช้ได้แต่ไม่ใช่จุดหลักของ lab นี้
+1. Function **ห้าม** แก้ข้อมูลตาราง และไม่มี Exception Handling แบบ procedure  
+2. Inline TVF ≈ parameterized view — optimizer รวมกับ query ได้ดี  
+3. mTVF / Scalar อาจไม่ถูก expand — ระวังใน `SELECT`/`WHERE`/`CROSS APPLY` ซ้ำ ๆ  
+4. SQL Server 2019+/2025: Scalar ที่เข้าเงื่อนไขอาจถูก **Inline** — ตรวจ plan ก่อนสรุปว่าช้าเสมอ
 
-## Key Takeaways
+## Takeaways
 
-- Prefer **Inline TVF** สำหรับ “query API” ที่คืนตาราง
-- Scalar / mTVF ใช้ได้ แต่วัด performance ก่อนโปรโมตขึ้น production
-- หลายครั้ง JOIN / APPLY / computed column ชัดและเร็วกว่า UDF ที่ซับซ้อน
+- คืนตาราง → เริ่มที่ Inline TVF  
+- ต้อง DML / error handling / multi result set → Stored Procedure (สไลด์ 89)

@@ -222,6 +222,27 @@ SET STATISTICS IO OFF;
 GO
 
 /* --------------------------------------------------------------------------
+   SQL Server 2019+ / 2025 — Scalar UDF Inlining (IQP)
+   ที่ compatibility_level >= 150 scalar ที่เข้าเงื่อนไขอาจถูก inline เข้า query
+   ตรวจ: sys.sql_modules.is_inlineable และ Actual Execution Plan
+   เอกสาร: https://learn.microsoft.com/en-us/sql/relational-databases/user-defined-functions/scalar-udf-inlining
+   -------------------------------------------------------------------------- */
+SELECT
+    OBJECT_SCHEMA_NAME(object_id) AS SchemaName,
+    OBJECT_NAME(object_id) AS FunctionName,
+    is_inlineable,
+    inline_type
+FROM sys.sql_modules
+WHERE object_id IN
+(
+    OBJECT_ID(N'Sales.ufn_MiniCustomerCity'),
+    OBJECT_ID(N'Sales.ufn_OrderFreightBucket')
+);
+
+PRINT N'บน SQL Server 2025 ยังอ้าง IQP ต่อ: PSP/OPPO (Lab 05) + Scalar Inlining (lab นี้)';
+GO
+
+/* --------------------------------------------------------------------------
    5) Alternatives สรุปสั้น ๆ
    - Inline TVF แทน Scalar เมื่อต้องการชุดคอลัมน์
    - JOIN / APPLY แทนการเรียก UDF ต่อแถว

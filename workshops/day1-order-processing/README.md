@@ -1,69 +1,62 @@
 # Workshop Day 1 — Order Processing
 
-## สถานการณ์ (Scenario)
+**Capstone หลัง Lab 03–04** · PPT โมดูล 3–4 (สไลด์ 47–59) · แพทเทิร์นสไลด์ **52**
 
-ทีมขายต้องการ API ในฐานข้อมูลสำหรับ **วางออเดอร์แบบอะตอมมิก**:
+## Scenario
 
-1. ตรวจลูกค้าและสต็อกสินค้า
-2. สร้างหัวออเดอร์ใน `Sales.MiniOrders`
-3. สร้างรายละเอียดใน `Sales.MiniOrderDetails`
-4. ลด `Production.MiniProducts.Quantity`
-5. ถ้าขั้นตอนใดล้มเหลว → **ROLLBACK ทั้งก้อน** และโยน error ที่อ่านรู้เรื่อง
+ฝ่ายขายเปิดแคมเปญสั่งซื้อออนไลน์ — แอปต้องเรียก API ในฐานข้อมูลเพื่อวางออเดอร์  
+ถ้าตัดสต็อกไม่พอหรือลูกค้าปิดใช้งาน ต้อง **ไม่เหลือออเดอร์ค้างครึ่ง ๆ** และต้องได้ error ที่ทีมซัพพอร์ตอ่านรู้เรื่อง
 
-ผู้เรียนต้อง implement `Sales.usp_PlaceOrder`
+คุณต้องสร้าง `Sales.usp_PlaceOrder`
 
-## วัตถุประสงค์
+## Skill Progression
 
-- รวมความรู้ Transaction + Error Handling จาก Day 1 เป็น procedure ที่ใช้งานได้จริง
-- ใช้ `TRY/CATCH` ร่วมกับ `XACT_ABORT` หรือตรวจ `XACT_STATE()` อย่างถูกต้อง
-- เขียน validation + `THROW` ที่มีรหัส/ข้อความชัดเจน
+| ระดับ | ทักษะที่พิสูจน์ใน workshop นี้ |
+|------:|--------------------------------|
+| 1 | รวม validation + `THROW` รหัสชัด |
+| 2 | Multi-table DML ใน transaction เดียวกับ `XACT_ABORT` / `XACT_STATE` |
+| 3 | Log ลง `ErrorLog` แล้ว rethrow โดยไม่ทิ้ง partial data |
 
 ## Timebox
 
 | ช่วง | เวลา |
 |------|------|
 | อ่านโจทย์ + ออกแบบ | 10 นาที |
-| ลงมือกับ `starter.sql` | 35–40 นาที |
-| เทียบ `solution.sql` + อภิปราย | 10–15 นาที |
+| ลงมือ `starter.sql` | 35–40 นาที |
+| เทียบ `solution.sql` | 10–15 นาที |
 | **รวม** | **~60 นาที** |
 
 ## Acceptance Criteria
 
-Procedure `Sales.usp_PlaceOrder` ต้อง:
-
 | # | เงื่อนไข |
 |---|----------|
-| 1 | รับอย่างน้อย: `@CustID`, `@ProductID`, `@Quantity`, `@UnitPrice` และ `@OrderID OUTPUT` |
-| 2 | ตรวจว่าลูกค้ามีอยู่และ `IsActive = 1` — ไม่ผ่านให้ `THROW` (เช่น 51001) |
-| 3 | ตรวจสต็อก `MiniProducts.Quantity >= @Quantity` — ไม่พอให้ `THROW` (เช่น 51002) |
+| 1 | รับอย่างน้อย: `@CustID`, `@ProductID`, `@Quantity`, `@UnitPrice`, `@OrderID OUTPUT` |
+| 2 | ลูกค้าต้องมีและ `IsActive = 1` — ไม่ผ่าน `THROW` (เช่น 51001) |
+| 3 | สต็อก `Quantity >= @Quantity` — ไม่พอ `THROW` (เช่น 51002) |
 | 4 | ใน transaction เดียว: INSERT order + detail + UPDATE ลดสต็อก |
-| 5 | สำเร็จแล้วเซ็ต `@OrderID` เป็น identity ของออเดอร์ใหม่ |
-| 6 | เมื่อ error: rollback ให้ครบ และไม่ทิ้ง partial data |
-| 7 | (แนะนำ) เรียก `dbo.usp_LogError` ใน CATCH ก่อน rethrow |
+| 5 | สำเร็จแล้วเซ็ต `@OrderID` |
+| 6 | Error → rollback ทั้งก้อน ไม่ทิ้ง partial data |
+| 7 | (แนะนำ) `usp_LogError` ใน CATCH ก่อน `THROW` |
 
-## ข้อมูลที่ใช้ทดสอบ
+## ข้อมูลทดสอบ
 
-หลังรัน `setup/01-create-lab-objects.sql`:
-
-- Customers: `CustID` 1–3
-- Products ที่สต็อกพอ: `854` (50), `859` (40), `860` (30)
+- Customers: `CustID` 1–3  
+- Products: `854` / `859` / `860` (ดู Quantity หลัง setup)
 
 ## Hints
 
-1. เริ่ม `SET NOCOUNT ON; SET XACT_ABORT ON;`
-2. Validate **ก่อน** หรือต้น TRY ก่อน DML
-3. ใช้ `UPDLOCK, ROWLOCK` ตอนอ่านสต็อกถ้าต้องการกัน race แบบง่าย (optional)
-4. `SCOPE_IDENTITY()` หรือ `OUTPUT INSERTED.OrderID` เพื่อได้ `@OrderID`
-5. ใน CATCH: `IF XACT_STATE() <> 0 ROLLBACK;` แล้ว `EXEC dbo.usp_LogError;` ตามด้วย `THROW;`
+1. `SET NOCOUNT ON; SET XACT_ABORT ON;`  
+2. Validate ก่อน DML  
+3. Optional: `UPDLOCK, ROWLOCK` ตอนอ่านสต็อก  
+4. `SCOPE_IDENTITY()` / `OUTPUT INSERTED`  
+5. CATCH: `IF XACT_STATE() <> 0 ROLLBACK;` → `usp_LogError` → `THROW;`
 
-## ลำดับไฟล์
+## Steps
 
-1. `starter.sql` — scaffold + test harness
-2. ผู้เรียนเติมส่วน TODO
+1. เปิด `starter.sql`  
+2. เติม TODO  
 3. เทียบ `solution.sql`
 
 ## Prerequisites
 
-- Day 1 labs 01–04
-- `setup/01-create-lab-objects.sql`
-- Database: `AdventureWorks` / `AdventureWorks2022`
+Day 1 labs 01–04 · `setup/01-create-lab-objects.sql`

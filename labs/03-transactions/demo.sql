@@ -256,5 +256,74 @@ SELECT * FROM Sales.MiniOrders WHERE PurchaseOrderNumber = N'DEMO-OVERSELL'; -- 
 SELECT Quantity FROM Production.MiniProducts WHERE ProductID = 854;
 GO
 
-PRINT N'===== Lab 03 demo เสร็จสิ้น =====';
+/*==============================================================================
+  SECTION H — แพทเทิร์นตรงสไลด์ 52 (PPT Version 5)
+  MiniCustomers → MiniOrders → MiniOrderDetails → UPDATE MiniProducts
+  สไลด์อาจใช้ @@IDENTITY — ที่นี่ใช้ SCOPE_IDENTITY() (ปลอดภัยกว่าเมื่อมี trigger)
+==============================================================================*/
+
+UPDATE Production.MiniProducts
+SET Quantity = CASE ProductID WHEN 854 THEN 100 WHEN 859 THEN 50 WHEN 860 THEN 50 END
+WHERE ProductID IN (854, 859, 860);
+GO
+
+SET XACT_ABORT ON;
+BEGIN TRY
+    BEGIN TRANSACTION;
+
+        INSERT INTO Sales.MiniCustomers
+        (
+            CompanyName, ContactName, ContactTitle, Address,
+            City, Region, PostalCode, Country, Phone
+        )
+        VALUES
+        (
+            N'Data Meccanica Co.,Ltd.', N'Phakkhaphong K.', N'Owner',
+            N'109/6 M9', N'Paris', NULL, N'10058', N'France', N'(66) 789-0123'
+        );
+
+        DECLARE @NewCustID int = CONVERT(int, SCOPE_IDENTITY());
+
+        INSERT INTO Sales.MiniOrders (CustID, OrderDate, Freight)
+        VALUES (@NewCustID, GETDATE(), 32.38);
+
+        DECLARE @NewOrderID int = CONVERT(int, SCOPE_IDENTITY());
+
+        INSERT INTO Sales.MiniOrderDetails
+            (OrderID, ProductID, UnitPrice, Quantity, Discount)
+        VALUES
+            (@NewOrderID, 854, 27, 30, 0.2),
+            (@NewOrderID, 859, 97, 2, 0),
+            (@NewOrderID, 860, 19, 3, 0);
+
+        UPDATE Production.MiniProducts SET Quantity = Quantity - 30 WHERE ProductID = 854;
+        UPDATE Production.MiniProducts SET Quantity = Quantity - 2  WHERE ProductID = 859;
+        UPDATE Production.MiniProducts SET Quantity = Quantity - 3  WHERE ProductID = 860;
+
+    COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+    -- สไลด์ 52: IF (XACT_STATE()) = -1 ROLLBACK
+    IF XACT_STATE() = -1
+        ROLLBACK TRANSACTION;
+    ELSE IF XACT_STATE() = 1
+        ROLLBACK TRANSACTION; -- เคลียร์ tran ที่ยัง committable ใน lab นี้เช่นกัน
+
+    THROW;
+END CATCH
+SET XACT_ABORT OFF;
+GO
+
+SELECT TOP (1) c.CustID, c.CompanyName, o.OrderID, o.Freight
+FROM Sales.MiniCustomers AS c
+JOIN Sales.MiniOrders AS o ON o.CustID = c.CustID
+WHERE c.CompanyName = N'Data Meccanica Co.,Ltd.'
+ORDER BY o.OrderID DESC;
+
+SELECT ProductID, Quantity
+FROM Production.MiniProducts
+WHERE ProductID IN (854, 859, 860);
+GO
+
+PRINT N'===== Lab 03 demo เสร็จสิ้น (รวมแพทเทิร์นสไลด์ 52) =====';
 GO

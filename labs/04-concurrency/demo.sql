@@ -15,11 +15,13 @@ SET NOCOUNT ON;
 GO
 
 /*==============================================================================
-  SECTION A — ปัญหา concurrency (conceptual cheat-sheet)
+  SECTION A — ปัญหา concurrency ตามสไลด์ 56
 ==============================================================================
   Dirty Read          : อ่านข้อมูลที่ยังไม่ commit
+  Lost Update         : สองฝ่าย UPDATE แล้วผลของฝ่ายหนึ่งหาย
   Non-Repeatable Read : อ่านแถวเดิมซ้ำได้ค่าใหม่หลังคนอื่น commit UPDATE/DELETE
-  Phantom Read        : อ่านชุดตามเงื่อนไขซ้ำแล้วมีแถวใหม่โผล่ (INSERT)
+  Phantom Read        : อ่านชุดตามเงื่อนไขซ้ำแล้วมีแถวใหม่โผล่ (INSERT) / หายไป
+  Double Read         : อ่านช่วงเดียวกันซ้ำเพราะ index key เลื่อนระหว่าง scan
 
   Isolation (pessimistic)     Dirty   NonRep   Phantom
   ------------------------------------------------------
@@ -38,6 +40,24 @@ SELECT
     is_read_committed_snapshot_on
 FROM sys.databases
 WHERE name = DB_NAME();
+GO
+
+/*==============================================================================
+  SECTION A2 — SQL Server 2025: Optimized Locking (ตรวจก่อน demo blocking)
+  เอกสาร: https://learn.microsoft.com/en-us/sql/relational-databases/performance/optimized-locking
+==============================================================================*/
+SELECT
+    name,
+    compatibility_level,
+    is_accelerated_database_recovery_on,
+    is_read_committed_snapshot_on,
+    is_optimized_locking_on,
+    DATABASEPROPERTYEX(DB_NAME(), 'IsOptimizedLockingOn') AS IsOptimizedLockingOn
+FROM sys.databases
+WHERE name = DB_NAME();
+
+PRINT N'ถ้า is_optimized_locking_on = 1 บน SQL Server 2025 — blocking/lock memory อาจต่างจาก demo คลาสสิก';
+PRINT N'Optimized locking ต้องการ ADR; LAQ ได้ประโยชน์เต็มเมื่อมี RCSI';
 GO
 
 /*==============================================================================
@@ -93,20 +113,23 @@ PRINT N'เปิด sessions/01-dirty-read-s1.sql และ s2.sql ในคน
 GO
 
 /*==============================================================================
-  SECTION D — Cleanup helpers (รันเมื่อ demo ค้าง)
-==============================================================================*/
+  SECTION E — แพทเทิร์นสไลด์ 59 (Isolation ระดับ session vs hint)
+  อธิบายโครง — ไม่รัน INSERT จริงใน overview (กันข้อมูลซ้ำ)
+  ดูรายละเอียดโค้ดเต็มบนสไลด์ / ทำใน exercise TODO 6
+==============================================================================
+  แนวทาง A:
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+    SET XACT_ABORT ON;
+    BEGIN TRY BEGIN TRAN
+        -- MiniCustomers / MiniOrders / MiniOrderDetails / UPDATE MiniProducts
+    COMMIT; END TRY BEGIN CATCH
+        IF (XACT_STATE()) = -1 ROLLBACK TRANSACTION;
+    END CATCH
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
 
--- คืนเบอร์โทร (แก้ค่าให้ตรงของเดิมในเครื่องคุณถ้าต่าง)
-/*
-UPDATE Person.PersonPhone
-SET PhoneNumber = N'555-555-0113'
-WHERE BusinessEntityID = 105;
-*/
-
--- ลบ category ที่ insert ระหว่าง phantom demo
-/*
-DELETE FROM Production.ProductCategory
-WHERE Name IN (N'Safety Gear', N'Gifts, Goodies and More', N'Lab Phantom Category');
+  แนวทาง B:
+    ไม่ SET isolation ทั้ง session
+    ใส่ WITH (SERIALIZABLE) บน INSERT MiniOrderDetails และ UPDATE MiniProducts
 */
 
 PRINT N'===== Lab 04 overview พร้อมแล้ว — ไปที่โฟลเดอร์ sessions/ =====';

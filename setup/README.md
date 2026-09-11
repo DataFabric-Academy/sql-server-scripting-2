@@ -8,9 +8,10 @@
 
 | รายการ | รายละเอียด |
 |--------|------------|
-| SQL Server | 2019 ขึ้นไป (แนะนำ 2022) — Developer / Express ก็ได้ |
-| SSMS | [Download SSMS](https://learn.microsoft.com/sql/ssms/download-sql-server-management-studio-ssms) ล่าสุด |
-| AdventureWorks | ฐานข้อมูลตัวอย่างจาก Microsoft |
+| SQL Server | **แนะนำ SQL Server 2025** (Developer) — ขั้นต่ำ 2019; Lab ฟีเจอร์ 2025 ต้อง 2025 + compat **170** |
+| SSMS | **SSMS 22** — [Download SSMS](https://learn.microsoft.com/sql/ssms/download-sql-server-management-studio-ssms) |
+| AdventureWorks | ฐานข้อมูลตัวอย่างจาก Microsoft (เช่น AdventureWorks2022 บน instance 2025) |
+| เอกสารเวอร์ชัน | [`docs/sql-server-2025.md`](../docs/sql-server-2025.md) |
 
 ## 1) ติดตั้ง AdventureWorks
 
@@ -21,7 +22,8 @@
 3. เลือก **Device** → ชี้ไปที่ไฟล์ `.bak` → Restore
 4. ตรวจว่า database ปรากฏใน Object Explorer (ชื่ออาจเป็น `AdventureWorks` หรือ `AdventureWorks2022`)
 
-> หากชื่อ DB เป็น `AdventureWorks2022` ให้แก้บรรทัด `USE AdventureWorks;` ในสคริปต์ lab ให้ตรงกัน หรือสร้าง synonym/alias ตามสะดวกของทีม
+> หากชื่อ DB เป็น `AdventureWorks2022` ให้แก้บรรทัด `USE AdventureWorks;` ในสคริปต์ lab ให้ตรงกัน  
+> บน SQL Server 2025 แนะนำตั้ง `ALTER DATABASE … SET COMPATIBILITY_LEVEL = 170` หลัง restore (ดู `docs/sql-server-2025.md`)
 
 ## 2) ติดตั้ง / เปิด SSMS
 
@@ -54,9 +56,10 @@ SELECT OBJECT_ID(N'dbo.ErrorLog') AS ErrorLogObjectId;
 ## ลำดับการใช้ในคอร์ส
 
 1. `setup/01-create-lab-objects.sql` ← **รันครั้งเดียวก่อน Day 1**
-2. `labs/01-language-elements` → `02` → `03` → `04`
-3. `workshops/day1-order-processing`
-4. Day 2 labs / workshop
+2. `labs/01-language-elements` → `02` → `03`
+3. `workshops/integrated-staging-transaction` (Query → `#temp` → TRAN)
+4. `labs/04-concurrency` → `workshops/day1-order-processing`
+5. Day 2 labs / workshop
 
 ## ทางเลือก: SQL Project (SqlPgSpLab)
 

@@ -205,5 +205,29 @@ SELECT CustID, CompanyName, ContactName
 FROM Sales.MiniCustomers;
 GO
 
+/*==============================================================================
+  SECTION H — SQL Server 2025 optional: Native REGEXP (compat 170)
+  ข้ามได้ถ้า engine < 2025 หรือ compatibility_level < 170
+  เอกสาร: https://devblogs.microsoft.com/azure-sql/unlocking-the-power-of-regex-in-sql-server/
+==============================================================================*/
+IF EXISTS
+(
+    SELECT 1
+    FROM sys.databases
+    WHERE name = DB_NAME()
+      AND compatibility_level >= 170
+)
+BEGIN
+    -- ตัวอย่างสั้น: ตรวจรูปแบบเบอร์โทรแบบง่าย
+    SELECT
+        CustID,
+        Phone,
+        CASE WHEN REGEXP_LIKE(Phone, N'^\([0-9]{2,3}\)[ ]?[0-9\-]+$') THEN 1 ELSE 0 END AS LooksLikePhone
+    FROM Sales.MiniCustomers;
+END
+ELSE
+    PRINT N'Skip REGEXP demo — ต้องการ SQL Server 2025 + compatibility_level >= 170';
+GO
+
 PRINT N'===== Lab 01 demo เสร็จสิ้น =====';
 GO

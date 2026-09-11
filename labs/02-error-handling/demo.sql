@@ -233,5 +233,16 @@ EXEC sp_dropmessage @msgnum = 55055, @lang = 'all';
 USE AdventureWorks;
 */
 
+/*==============================================================================
+  SECTION — Managed Code / SQL CLR (สไลด์ 45) — conceptual only
+==============================================================================
+  ถ้าไม่ดัก exception ใน managed code เอง Message ID มักเป็น 6522
+  ในคลาสนี้ไม่เขียน CLR — แค่รู้ว่าต้อง handle ที่ฝั่ง .NET
+*/
+
+PRINT N'Note (สไลด์ 45): SQL CLR / Managed Code errors มักรายงานเป็น 6522 ถ้าไม่ดักใน managed code';
+PRINT N'SQL Server 2025: งาน regex หลายเคสใช้ REGEXP_* พื้นเมืองแทน CLR ได้ (compat 170) — ดู Lab 01 SECTION H';
+GO
+
 PRINT N'===== Lab 02 demo เสร็จสิ้น =====';
 GO

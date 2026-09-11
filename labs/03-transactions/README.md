@@ -1,50 +1,49 @@
 # Lab 03 — Transactions
 
-## วัตถุประสงค์
+**PPT:** โมดูล 3 · สไลด์ **47–52** · Demo สำคัญสไลด์ **52** (Mini* + `XACT_ABORT` + `TRY/CATCH`)
 
-ออกแบบและควบคุม transaction ให้ข้อมูลสอดคล้องกัน (ACID):
+## Scenario
 
-- ความหมายของ transaction; Implicit / Explicit / Autocommit
-- `BEGIN` / `COMMIT` / `ROLLBACK` และ `@@TRANCOUNT`
-- ผลของ error เมื่อไม่เปิด `XACT_ABORT`
-- `SET XACT_ABORT ON`
-- แพทเทิร์น `TRY/CATCH` + `XACT_STATE()`
-- ใช้ตาราง Mini* จำลอง insert ออเดอร์ที่อาจชน `CHECK (Quantity >= 0)`
+พนักงานขายสร้างลูกค้า + ออเดอร์ + รายละเอียด + ตัดสต็อกในสคริปต์เดียว  
+บางครั้งแทรกลูกค้าสำเร็จ แต่ตัดสต็อกพัง → ข้อมูลค้างครึ่ง ๆ  
+ธุรกิจต้องการกฎ: **สำเร็จทั้งก้อน หรือไม่เหลือร่องรอย**
 
-## ระยะเวลาประมาณ
+## Skill Progression
 
-**60–75 นาที**
+| ระดับ | ทักษะที่ควรได้ |
+|------:|----------------|
+| 1 | อธิบาย ACID และโหมด Auto / Explicit / Implicit |
+| 2 | ใช้ `BEGIN`/`COMMIT`/`ROLLBACK` และอ่าน `@@TRANCOUNT` ได้ |
+| 3 | ห่อ Multi-table DML ด้วย `XACT_ABORT` + `TRY/CATCH` + `XACT_STATE()` ตามแพทเทิร์นสไลด์ 52 |
 
-## Prerequisites
+## เวลา / Prerequisites
 
-- Lab 02 (TRY/CATCH, THROW)
-- มี `Production.MiniProducts`, `Sales.MiniCustomers`, `Sales.MiniOrders`, `Sales.MiniOrderDetails`
-- แนะนำรีเซ็ตสต็อก 854/859/860 ถ้าทดลองจนติดลบเกือบหมด:
+**60–75 นาที** · Lab 02 · Mini* จาก setup  
+
+รีเซ็ตสต็อกเมื่อทดลองจนเพี้ยน:
 
 ```sql
 UPDATE Production.MiniProducts
 SET Quantity = CASE ProductID WHEN 854 THEN 100 WHEN 859 THEN 50 WHEN 860 THEN 50 END
-WHERE ProductID IN (854,859,860);
+WHERE ProductID IN (854, 859, 860);
 ```
 
-## ลำดับการรันไฟล์
+## Steps
 
-| ลำดับ | ไฟล์ | ผู้ใช้ |
+| ลำดับ | ไฟล์ | ทำอะไร |
 |------:|------|--------|
-| 1 | `demo.sql` | Instructor — รันทีละ section; สังเกต `@@TRANCOUNT` และสต็อก |
-| 2 | `exercise.sql` | ผู้เรียน |
+| 1 | `demo.sql` | รวม SECTION แพทเทิร์นสไลด์ 52 (`SCOPE_IDENTITY` แทน `@@IDENTITY`) |
+| 2 | `exercise.sql` | ออเดอร์ atomic + เคส rollback |
 | 3 | `solution.sql` | เฉลย |
 
 ## จุดที่ต้องสังเกต
 
-1. **Autocommit** คือ default — แต่ละ statement เป็น transaction ย่อย (สำเร็จ commit / ล้ม rollback statement นั้น)
-2. **`@@TRANCOUNT`** เพิ่มทุก `BEGIN TRAN`; `COMMIT` ลดทีละ 1; `ROLLBACK` เคลียร์ทั้งหมดกลับ 0
-3. **Nested `BEGIN TRAN` ไม่ได้สร้าง nested true transaction** — เป็นแค่การนับ; rollback ในชั้นในจะ rollback ทั้งก้อน
-4. **ไม่มี `XACT_ABORT`**: runtime error บางชนิด rollback แค่ statement แต่ transaction ยังเปิด → batch ต่ออาจเจอ “transaction doomed” หรือข้อมูลค้างครึ่ง ๆ
-5. **`XACT_STATE()`**: `1` = committable, `0` = ไม่มี tran, `-1` = uncommittable → ต้อง `ROLLBACK`
+1. Autocommit = default  
+2. Nested `BEGIN TRAN` ไม่ใช่ nested true transaction — `ROLLBACK` เคลียร์ทั้งก้อน  
+3. ไม่มี `XACT_ABORT`: error บางชนิดเหลือ transaction ค้าง  
+4. `XACT_STATE()`: `1` / `0` / `-1` (uncommittable → ต้อง `ROLLBACK`)
 
-## Key Takeaways
+## Takeaways
 
-- งานหลายตารางที่ต้อง atomic → Explicit transaction + `TRY/CATCH` + `XACT_ABORT ON`
-- ตรวจ `XACT_STATE()` ก่อน `COMMIT`/`ROLLBACK` ใน CATCH
-- ใช้ Mini* + CHECK เป็นโมเดล “สต็อกติดลบไม่ได้” ก่อนขึ้น production procedure จริง
+- งานหลายตารางที่ต้อง atomic → Explicit tran + `TRY/CATCH` + `XACT_ABORT ON`  
+- แพทเทิร์นนี้คือหัวใจของ Workshop Day 1

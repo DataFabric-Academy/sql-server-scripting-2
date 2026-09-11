@@ -36,6 +36,12 @@ Desktop.ini
 _local/
 scratch/
 *.bak
+_pptx_extract.txt
+_slide_images/
+
+# Course deck (local instructor copy — do not commit autosave/lock)
+*.pptx
+~$*.pptx
 
 # Visual Studio migration / upgrade logs
 UpgradeLog*.htm

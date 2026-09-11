@@ -306,6 +306,21 @@ PRINT N'Mitigation demos ready: OptimizeFor / LocalVar / Recompile';
 GO
 
 /* --------------------------------------------------------------------------
+   6b) SQL Server 2025 / compat 170 — engine-side help (conceptual)
+   - Parameter Sensitive Plan (PSP): ตั้งแต่ 2022 สำหรับ SELECT;
+     ใน 2025 ขยายไป DML (INSERT/UPDATE/DELETE/MERGE) ที่ compatibility_level = 170
+   - Optional Parameter Plan Optimization (OPPO): แยก plan เมื่อพารามิเตอร์เป็น NULL vs NOT NULL
+   Mitigation ด้านบนยังจำเป็นเมื่อต้องการควบคุมชัดเจน / เวอร์ชันเก่ากว่า 2025
+   เอกสาร: https://learn.microsoft.com/en-us/sql/relational-databases/performance/intelligent-query-processing
+   -------------------------------------------------------------------------- */
+SELECT name, compatibility_level
+FROM sys.databases
+WHERE name = DB_NAME();
+
+PRINT N'ถ้า compatibility_level >= 170 บน SQL Server 2025 — พูดถึง PSP-for-DML และ OPPO หลัง mitigation แบบ manual';
+GO
+
+/* --------------------------------------------------------------------------
    7) Nested Procedures
    -------------------------------------------------------------------------- */
 CREATE OR ALTER PROCEDURE Sales.usp_ResolveCustomerName
@@ -342,17 +357,53 @@ EXEC Sales.usp_PrintCustomerCard @CustID = 2;
 GO
 
 /* --------------------------------------------------------------------------
-   8) Optional: Table-Valued Parameter (TVP) — mention + mini demo
+   8) OUTPUT clause / OUTPUT INSERTED — จับค่าจาก INSERT โดยไม่พึ่ง SCOPE_IDENTITY อย่างเดียว
+      สำคัญเมื่อมี Trigger / insert หลายแถว
+   -------------------------------------------------------------------------- */
+DECLARE @InsertedOrders TABLE
+(
+    OrderID int NOT NULL,
+    CustID  int NULL,
+    Status  varchar(20) NOT NULL
+);
+
+INSERT INTO Sales.MiniOrders (CustID, PurchaseOrderNumber, Freight, Status)
+OUTPUT inserted.OrderID, inserted.CustID, inserted.Status
+INTO @InsertedOrders (OrderID, CustID, Status)
+VALUES (1, N'DEMO-OUTPUT', 0, 'Open');
+
+SELECT * FROM @InsertedOrders;  -- ได้ OrderID ที่เพิ่ง insert แม้มี trigger ภายหลัง
+
+-- cleanup demo row (detail ไม่มี)
+DELETE d
+FROM Sales.MiniOrderDetails AS d
+WHERE d.OrderID IN (SELECT OrderID FROM @InsertedOrders);
+
+DELETE o
+FROM Sales.MiniOrders AS o
+WHERE o.OrderID IN (SELECT OrderID FROM @InsertedOrders);
+GO
+
+/* --------------------------------------------------------------------------
+   9) Table-Valued Parameter (TVP) — ส่งหลายบรรทัดเข้า Procedure เป็นชุด
    -------------------------------------------------------------------------- */
 IF TYPE_ID(N'Sales.OrderLineType') IS NOT NULL
+BEGIN
+    -- ต้อง drop proc ที่อ้าง type ก่อน (ถ้ามี)
+    IF OBJECT_ID(N'Sales.usp_PreviewOrderLines', N'P') IS NOT NULL
+        DROP PROCEDURE Sales.usp_PreviewOrderLines;
+    IF OBJECT_ID(N'Sales.usp_PlaceOrderLines', N'P') IS NOT NULL
+        DROP PROCEDURE Sales.usp_PlaceOrderLines;
     DROP TYPE Sales.OrderLineType;
+END
 GO
 
 CREATE TYPE Sales.OrderLineType AS TABLE
 (
     ProductID int      NOT NULL,
-    Quantity  smallint NOT NULL,
-    UnitPrice money    NOT NULL
+    Quantity  smallint NOT NULL CHECK (Quantity > 0),
+    UnitPrice money    NOT NULL CHECK (UnitPrice >= 0),
+    Discount  numeric(4, 3) NOT NULL DEFAULT (0)
 );
 GO
 
@@ -361,21 +412,25 @@ CREATE OR ALTER PROCEDURE Sales.usp_PreviewOrderLines
 AS
 BEGIN
     SET NOCOUNT ON;
+
     SELECT
         ProductID,
         Quantity,
         UnitPrice,
-        Quantity * UnitPrice AS LineTotal
+        Discount,
+        Quantity * UnitPrice * (1 - Discount) AS LineTotal
     FROM @Lines;
 END;
 GO
 
 DECLARE @t Sales.OrderLineType;
-INSERT INTO @t (ProductID, Quantity, UnitPrice)
-VALUES (854, 2, 100.00), (859, 1, 250.00);
+INSERT INTO @t (ProductID, Quantity, UnitPrice, Discount)
+VALUES
+    (854, 2, 100.00, 0.00),
+    (859, 1, 250.00, 0.10);
 
 EXEC Sales.usp_PreviewOrderLines @Lines = @t;
 GO
 
-PRINT N'=== Lab 05 Demo complete ===';
+PRINT N'=== Lab 05 Demo complete (OUTPUT INSERTED + TVP) ===';
 GO

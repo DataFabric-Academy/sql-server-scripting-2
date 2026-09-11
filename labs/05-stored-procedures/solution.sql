@@ -188,3 +188,68 @@ GO
 EXEC Sales.usp_CountOrdersByProduct @ProductID = 870;
 EXEC Sales.usp_CountOrdersByProduct @ProductID = 897;
 GO
+
+/* ==========================================================================
+   Exercise 5 — OUTPUT INSERTED
+   ========================================================================== */
+DECLARE @Out TABLE
+(
+    OrderID int NOT NULL,
+    CustID  int NULL
+);
+
+INSERT INTO Sales.MiniOrders (CustID, PurchaseOrderNumber, Freight, Status)
+OUTPUT inserted.OrderID, inserted.CustID
+INTO @Out (OrderID, CustID)
+VALUES (2, N'EX05-OUTPUT', 1, 'Open');
+
+SELECT OrderID, CustID FROM @Out;
+
+DELETE FROM Sales.MiniOrders
+WHERE OrderID IN (SELECT OrderID FROM @Out);
+GO
+
+/* ==========================================================================
+   Exercise 6 — TVP
+   ========================================================================== */
+IF OBJECT_ID(N'Sales.usp_SumOrderLines', N'P') IS NOT NULL
+    DROP PROCEDURE Sales.usp_SumOrderLines;
+IF OBJECT_ID(N'Sales.usp_PreviewOrderLines', N'P') IS NOT NULL
+    DROP PROCEDURE Sales.usp_PreviewOrderLines;
+IF OBJECT_ID(N'Sales.usp_PlaceOrderLines', N'P') IS NOT NULL
+    DROP PROCEDURE Sales.usp_PlaceOrderLines;
+IF TYPE_ID(N'Sales.OrderLineType') IS NOT NULL
+    DROP TYPE Sales.OrderLineType;
+GO
+
+CREATE TYPE Sales.OrderLineType AS TABLE
+(
+    ProductID int NOT NULL,
+    Quantity  smallint NOT NULL,
+    UnitPrice money NOT NULL,
+    Discount  numeric(4, 3) NOT NULL DEFAULT (0)
+);
+GO
+
+CREATE OR ALTER PROCEDURE Sales.usp_SumOrderLines
+    @Lines Sales.OrderLineType READONLY
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        SUM(Quantity * UnitPrice * (1 - Discount)) AS MerchandiseTotal,
+        COUNT(*) AS LineCount
+    FROM @Lines;
+END;
+GO
+
+DECLARE @lines Sales.OrderLineType;
+INSERT INTO @lines (ProductID, Quantity, UnitPrice, Discount)
+VALUES
+    (854, 2, 100.00, 0),
+    (859, 1, 250.00, 0.1),
+    (860, 3, 19.00, 0);
+
+EXEC Sales.usp_SumOrderLines @Lines = @lines;
+GO

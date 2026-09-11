@@ -55,3 +55,14 @@ GO
 */
 -- TODO
 GO
+
+/* ==========================================================================
+   Exercise 5 — Deterministic vs Nondeterministic (สไลด์ 80)
+   ==========================================================================
+   TODO: PRINT อธิบายสั้น ๆ พร้อมยกตัวอย่าง
+         - Deterministic: เช่น ABS(@x), หรือ UDF ที่คำนวณจากพารามิเตอร์อย่างเดียว
+         - Nondeterministic: เช่น GETDATE(), NEWID(), หรือ UDF ที่อ่านตารางที่เปลี่ยนได้
+         และบอกว่าทำไม indexed view / persisted computed มักต้องการ deterministic
+*/
+-- TODO
+GO

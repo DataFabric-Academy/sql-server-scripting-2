@@ -1,44 +1,41 @@
 # Lab 02 — Error Handling
 
-## วัตถุประสงค์
+**PPT:** โมดูล 2 (ส่วนท้าย) · สไลด์ **36–45** · ในสไลด์อยู่ใน “องค์ประกอบ T-SQL” — แยก lab เพื่อจัดเวลา
 
-จัดการข้อผิดพลาดใน T-SQL อย่างเป็นระบบ:
+## Scenario
 
-- เปรียบเทียบ `RAISERROR` กับ `THROW`
-- Custom message ผ่าน `sp_addmessage` / `sys.messages`
-- `FORMATMESSAGE`
-- `TRY/CATCH` และฟังก์ชัน `ERROR_*`
-- ข้อผิดพลาดที่ catch ไม่ได้
-- แพทเทิร์น rethrow + บันทึกลง `dbo.ErrorLog`
+สคริปต์ตัดสต็อกพังกลางคัน แต่แอปเห็นแค่ “Query failed” โดยไม่มีรหัส/ข้อความที่ใช้แก้ได้  
+และบางที error เงียบหายเพราะ severity ต่ำหรือไม่ได้ดักใน `TRY/CATCH`  
+ทีมต้องการแพทเทิร์น **แจ้ง → ดัก → บันทึก → ส่งต่อ** ก่อนห่อเป็น Procedure
 
-## ระยะเวลาประมาณ
+## Skill Progression
 
-**45–60 นาที**
+| ระดับ | ทักษะที่ควรได้ |
+|------:|----------------|
+| 1 | อธิบาย Severity / Message ID / ความต่าง `RAISERROR` vs `THROW` |
+| 2 | เขียน `TRY/CATCH` + `ERROR_*` และ custom message (`sp_addmessage`) ได้ |
+| 3 | Rethrow + บันทึก `dbo.ErrorLog` ได้อย่างปลอดภัย |
 
-## Prerequisites
+## เวลา / Prerequisites
 
-- Lab 01 เสร็จแล้ว (เข้าใจ batch / variable)
-- มีตาราง `dbo.ErrorLog` จาก `setup/01-create-lab-objects.sql`
-- สิทธิ์รัน `sp_addmessage` บน `master` (หรือ instructor รันส่วน custom message ให้)
+**45–60 นาที** · Lab 01 · มี `dbo.ErrorLog` จาก setup · (custom message อาจต้องสิทธิ์ `master`)
 
-## ลำดับการรันไฟล์
+## Steps
 
-| ลำดับ | ไฟล์ | ผู้ใช้ |
+| ลำดับ | ไฟล์ | ทำอะไร |
 |------:|------|--------|
-| 1 | `demo.sql` | Instructor — รันทีละ section; ส่วน `sp_addmessage` อาจต้องสิทธิ์สูง |
+| 1 | `demo.sql` | Instructor — รวมโน้ต Managed Code **6522** และทางเลือก REGEXP แทน CLR |
 | 2 | `exercise.sql` | ผู้เรียน |
 | 3 | `solution.sql` | เฉลย |
 
 ## จุดที่ต้องสังเกต
 
-1. **`THROW` ไม่มีพารามิเตอร์** ใน `CATCH` = rethrow ของ error เดิม (แนะนำ)
-2. **`RAISERROR` severity 11–19** เข้า `CATCH` ได้; severity ≤10 เป็น informational
-3. **`THROW` ต้องการ message_id ≥ 50000** เมื่อระบุเอง; และ statement ก่อนหน้าต้องจบด้วย `;`
-4. **Compilation / batch-aborting errors บางชนิดไม่เข้า CATCH** (เช่น syntax error ทั้ง batch, บาง connection-level)
-5. บันทึก `ERROR_*` ลง `ErrorLog` **ก่อน** `THROW` อีกครั้ง — หลังออกจาก CATCH ค่า `ERROR_*` หาย
+1. `THROW` ใน `CATCH` โดยไม่มีพารามิเตอร์ = rethrow (แนะนำ)  
+2. Severity ≤ 10 มักไม่เข้า `CATCH`  
+3. บาง compile / connection-level error ดักไม่ได้  
+4. บันทึก `ERROR_*` **ก่อน** `THROW` อีกครั้ง
 
-## Key Takeaways
+## Takeaways
 
-- Production code ควรใช้ `TRY/CATCH` + บันทึก log + `THROW;` (rethrow)
-- แยก business error (custom 50000+) จาก system error
-- `XACT_ABORT` จะคุยต่อใน Lab 03 — error handling กับ transaction ต้องออกแบบคู่กัน
+- Error ที่ดี = ผู้เรียกแก้ต่อได้ (รหัส + ข้อความชัด)  
+- แพทเทิร์นนี้จะถูกใช้ซ้ำใน Lab 03 / 05 และ Workshop

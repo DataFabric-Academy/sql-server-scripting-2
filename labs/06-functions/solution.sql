@@ -107,3 +107,9 @@ CROSS APPLY
     END AS Bucket
 ) AS b;
 GO
+
+/* Exercise 5 — Deterministic vs Nondeterministic (สไลด์ 80) */
+PRINT N'Deterministic: อินพุตเดิม → ผลเดิมเสมอ เช่น ABS(@x), หรือ UDF คำนวณจากพารามิเตอร์อย่างเดียว';
+PRINT N'Nondeterministic: ผลอาจเปลี่ยนแม้พารามิเตอร์เดิม เช่น GETDATE(), NEWID(), UDF ที่อ่านตารางที่เปลี่ยนได้';
+PRINT N'Indexed view / persisted computed มักต้องการ deterministic เพื่อให้เก็บผลซ้ำได้อย่างถูกต้อง';
+GO

@@ -73,3 +73,28 @@ GO
 
 -- TODO: sniffing mitigation procedure
 GO
+
+/* ==========================================================================
+   Exercise 5 — OUTPUT INSERTED
+   ==========================================================================
+   TODO:
+   - INSERT 1 แถวเข้า Sales.MiniOrders (CustID = 2, PO = N'EX05-OUTPUT', Freight = 1)
+   - ใช้ OUTPUT inserted.OrderID, inserted.CustID INTO ตัวแปรตาราง @Out
+   - SELECT จาก @Out แสดง OrderID ที่ได้
+   - แล้ว DELETE แถวที่สร้าง (cleanup) โดยใช้ OrderID จาก @Out
+   ห้ามใช้ SCOPE_IDENTITY() ในข้อนี้
+*/
+-- TODO
+GO
+
+/* ==========================================================================
+   Exercise 6 — TVP
+   ==========================================================================
+   TODO:
+   - สร้าง TYPE Sales.OrderLineType (ถ้ายังไม่มี) คอลัมน์ ProductID, Quantity, UnitPrice, Discount
+   - สร้าง Sales.usp_SumOrderLines(@Lines Sales.OrderLineType READONLY)
+     คืนผลรวม LineTotal = SUM(Quantity * UnitPrice * (1 - Discount)) เป็น SELECT แถวเดียว
+   - ทดสอบด้วย 2–3 บรรทัดสินค้า 854/859/860
+*/
+-- TODO: TYPE + PROCEDURE + EXEC test
+GO
